@@ -7,8 +7,11 @@ from wit import Wit
 
 load_dotenv()
 
+LOG_CHANNEL = getenv('LOG_CHANNEL')
 bot = botogram.create(getenv('TG_TOKEN'))
 wit = Wit(getenv('WIT_TOKEN'))
+translator = google_translator()
+
 
 @bot.command("hello")
 def hello_command(chat, message, args):
@@ -17,7 +20,20 @@ def hello_command(chat, message, args):
 
 @bot.process_message
 def process_message(chat, message):
-    chat.send("<pre>"+html.escape(json.dumps(wit.message(message.text), indent=True))+"</pre>")
+    if chat.id < 0:
+        return
+    if not message.text:
+        return
+    messaggio_utente = message.text
+    messaggio_tradotto = translator.translate(messaggio_utente, lang_tgt='en')
+    if messaggio_tradotto is None:
+        return
+    res = wit.message(messaggio_tradotto)
+    tres = html.escape(json.dumps(res, indent=True))
+    chat.send("<pre>"+tres+"</pre>")
+    bot.chat(LOG_CHANNEL).send('User: '+ message.sender.first_name + '\n'
+                        + 'Message: <pre>' + messaggio_utente + '</pre>\n'
+                        + 'Res : <pre>'+tres+'</pre>')
 
 if __name__ == "__main__":
     bot.run()
