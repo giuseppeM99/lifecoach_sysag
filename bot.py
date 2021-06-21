@@ -4,6 +4,7 @@ import html
 from os import getenv
 from dotenv import load_dotenv
 from wit import Wit
+from google_trans_new import google_translator
 
 load_dotenv()
 
@@ -17,6 +18,10 @@ translator = google_translator()
 def hello_command(chat, message, args):
     """Dice ciao in inglese"""
     chat.send("Hello world!")
+
+@bot.command("que")
+def que_command(chat, message, args):
+    chat.send("Colvoque")
 
 @bot.process_message
 def process_message(chat, message):
