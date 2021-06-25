@@ -87,13 +87,13 @@ def process_message(chat, message):
                   "Potresti ripetere?")
 
     elif res['intents'][0]['name'] == 'add_swimming':
-        chat.send("Hai selezionato l'attività di nuoto \U0001F3CA \nConfermi la scelta?", attach=btns_nuoto)
+        chat.send("Confermi di aver selezionato un'attività di nuoto? \U0001F3CA", attach=btns_nuoto)
 
     elif res['intents'][0]['name'] == 'add_running':
-        chat.send("Hai selezionato l'attività di corsa \U0001F3C3 \nConfermi la scelta?", attach=btns_corsa)
+        chat.send("Confermi di aver selezionato un'attività di corsa? \U0001F3C3", attach=btns_corsa)
 
     elif res['intents'][0]['name'] == 'add_cycling':
-        chat.send("Hai selezionato l'attività di ciclismo \U0001F6B4 \nConfermi la scelta?", attach=btns_ciclismo)
+        chat.send("Confermi di aver selezionato un'attività di ciclismo? \U0001F6B4", attach=btns_ciclismo)
 
     # tres = html.escape(json.dumps(res, indent=True))
     # chat.send("<pre>"+tres+"</pre>")
