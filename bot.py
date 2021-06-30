@@ -1,26 +1,30 @@
-import botogram
-import json
-import html
-from os import getenv
-from dotenv import load_dotenv
-from wit import Wit
-from google_trans_new import google_translator
 
+from dotenv import load_dotenv
 load_dotenv()
+
+import botogram
+from os import getenv
+from utils import wit
+from objects.user import User
 
 LOG_CHANNEL = getenv('LOG_CHANNEL')
 bot = botogram.create(getenv('TG_TOKEN'))
-wit = Wit(getenv('WIT_TOKEN'))
-translator = google_translator()
+
 
 
 bot.about = "Questo chatbot aiuta l'utente a monitorare l'andamento di una o più attività sportive a scelta tra " \
             "nuoto, ciclismo e corsa, affinchè esse possano essere svolte rispettando la programmazione iniziale e " \
             "i parametri standard riguardanti l'allenamento previsto."
 
+def checkEta(user):
+    if User(user).getEta() is None:
+        bot.chat(user.id).send('Per poter funzionare devo sapere la tua età, puoi dirmi quanti anni hai?')
+        User(user).setState('set_eta')
 
 @bot.command("start")
 def start_command(chat, message, args):
+    # resetto lo stato
+    User(message.sender).setState(None)
     btns = botogram.Buttons()
     btns[0].callback("Nuoto \U0001F3CA", "nuoto")
     btns[1].callback("Corsa \U0001F3C3", "corsa")
@@ -37,28 +41,49 @@ def start_command(chat, message, args):
 
 
 @bot.callback("nuoto")
-def nuoto_callback(query, chat, message):
+def nuoto_callback(query, chat):
+    User(query.sender).setState('add_nuoto')
     chat.send("L'intent è il nuoto")
+    checkEta(query.sender)
 
 
 @bot.callback("corsa")
-def corsa_callback(query, chat, message):
+def corsa_callback(query, chat):
+    User(query.sender).setState('add_corsa')
     chat.send("L'intent è la corsa")
 
 
 @bot.callback("ciclismo")
-def ciclismo_callback(query, chat, message):
+def ciclismo_callback(query, chat):
+    User(query.sender).setState('add_ciclismo')
     chat.send("L'intent è il ciclismo")
 
 
 @bot.callback("sbagliato")
-def sbagliato_callback(query, chat, message):
+def sbagliato_callback(query, chat):
+    User(query.sender).setState(None)
     chat.send("Perdonami \U0001F605 \nProva a dirmi di nuovo quale attività vuoi svolgere, magari in maniera più "
               "precisa, in modo tale che io possa comprendere al meglio \U0001F609")
 
 
 @bot.process_message
 def process_message(chat, message):
+    u = User(message.sender)
+
+    state = u.getState()
+    if state is not None:
+        print('Ha uno stato: %s' %state)
+        if state == 'set_eta':
+            numeri = [int(s) for s in message.text.split() if s.isdigit()]
+            if len(numeri) == 1:
+                chat.send('Ok, hai %s anni' %numeri[0])
+                u.setEta(numeri[0])
+                u.setState()
+            else:
+                chat.send('Non credo di aver capito bene, puoi ripetere')
+        #vedere che fare qua in base agli state
+        return
+
     btns_nuoto = botogram.Buttons()
     btns_nuoto[0].callback("Sì \U0001F44D", "nuoto")
     btns_nuoto[0].callback("No \U0001F44E", "sbagliato")
@@ -75,13 +100,11 @@ def process_message(chat, message):
         return
     if not message.text:
         return
-    messaggio_utente = message.text
-    messaggio_tradotto = translator.translate(messaggio_utente, lang_src='it', lang_tgt='en')
-    if messaggio_tradotto is None:
-        return
-    res = wit.message(messaggio_tradotto)
 
-    if not res['intents']:
+    res = wit(message.text)
+
+    print(res)
+    if res is None or not res['intents']:
         chat.send("Non ho capito quale attività hai scelto \U0001F605 \n\nRicordati che puoi selezionare "
                   "solo queste attività:\n- Nuoto \U0001F3CA \n- Corsa \U0001F3C3 \n- Ciclismo \U0001F6B4 \n\n"
                   "Potresti ripetere?")
@@ -100,7 +123,6 @@ def process_message(chat, message):
     # bot.chat(LOG_CHANNEL).send('User: '+ message.sender.first_name + '\n'
     #                     + 'Message: <pre>' + messaggio_utente + '</pre>\n'
     #                     + 'Res : <pre>'+tres+'</pre>')
-
 
 if __name__ == "__main__":
     bot.run()
