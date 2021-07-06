@@ -1,4 +1,5 @@
 botogram2
 wit
 python-dotenv
-google_trans_new
+itranslate
+python-dateutil

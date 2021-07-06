@@ -14,10 +14,11 @@ class User:
 
     def pushState(self, nextState):
         curState = self.getState()
+        print(curState)
         if curState is None:
             curState = nextState
         else:
-            curState = self.STATE_SEP.join([nextState, *curState.split(',')])
+            curState = self.STATE_SEP.join([nextState, *str(curState).split(',')])
         self.setState(curState)
 
 
@@ -25,7 +26,7 @@ class User:
         curState = self.getState()
         if curState is None:
             return False
-        splitted = curState.split(',')
+        splitted = str(curState).split(',')
         prevState = splitted.pop(0)
         if remove:
             newState = None
@@ -37,6 +38,8 @@ class User:
     def getState(self):
         c.execute('''SELECT state FROM user WHERE user_id = ?''', (self.id,))
         u = c.fetchone()
+        if u is False:
+            u = None
         if u is not None:
             return u[0]
         return None

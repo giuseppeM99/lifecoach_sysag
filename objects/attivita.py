@@ -10,13 +10,16 @@ class Attivita:
     CORSA = 2
     CICLISMO = 3
 
-    def __init__(self, user_id, tipo):
-        c.execute('''INSERT INTO attivita(user_id, tipo) VALUES (:user_id, :tipo)''', {'user_id': user_id, 'tipo': tipo})
-        conn.commit()
-        self.id = c.lastrowid
+    def __init__(self, id, tipo = None):
+        if tipo is None:
+            self.id = id
+        else:
+            c.execute('''INSERT INTO attivita(user_id, tipo) VALUES (:user_id, :tipo)''', {'user_id': id, 'tipo': tipo})
+            conn.commit()
+            self.id = c.lastrowid
 
-    def __init__(self, id):
-        self.id = c.id
+    def getID(self):
+        return self.id
 
     def getUserID(self):
         c.execute('''SELECT user_id FROM attivita WHERE id = :id''', {'id': self.id})

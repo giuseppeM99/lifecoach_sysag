@@ -6,15 +6,18 @@ import botogram
 from os import getenv
 from utils import wit
 from objects.user import User
+from objects.attivita import Attivita
+from dateutil import parser
+from datetime import datetime
 
 LOG_CHANNEL = getenv('LOG_CHANNEL')
 bot = botogram.create(getenv('TG_TOKEN'))
 
 
-
 bot.about = "Questo chatbot aiuta l'utente a monitorare l'andamento di una o più attività sportive a scelta tra " \
             "nuoto, ciclismo e corsa, affinchè esse possano essere svolte rispettando la programmazione iniziale e " \
             "i parametri standard riguardanti l'allenamento previsto."
+
 
 @bot.command("start")
 def start_command(chat, message, args):
@@ -59,8 +62,14 @@ def start_command(chat, message, args):
 
 @bot.callback("nuoto")
 def nuoto_callback(query, chat):
-    User(query.sender).pushState('add_nuoto')
+    u = User(query.sender)
+    a = Attivita(query.sender.id, Attivita.NUOTO)
+
+    u.pushState(a.getID())
+    u.pushState('add_dataora')
+
     chat.send("L'intent è il nuoto")
+    chat.send("Bene, quando hai intenzione di andare a nuotare? Dimmi pure la data e l'ora")
 
 
 @bot.callback("corsa")
@@ -81,6 +90,7 @@ def sbagliato_callback(query, chat):
     chat.send("Perdonami \U0001F605 \nProva a dirmi di nuovo quale attività vuoi svolgere, magari in maniera più "
               "precisa, in modo tale che io possa comprendere al meglio \U0001F609")
 
+
 def pstate_set_eta(chat, message, user):
     numeri = [int(s) for s in message.text.split() if s.isdigit()]
     if len(numeri) == 1:
@@ -89,6 +99,26 @@ def pstate_set_eta(chat, message, user):
         user.popState(True)
     else:
         chat.send('Non credo di aver capito bene, puoi ripetere')
+
+
+def dataora(chat, message, u):
+    res = wit(message.text)
+    if res['entities']['wit$datetime:time'] is not None and res['entities']['wit$datetime:time'][0] is not None:
+        data = parser.parse(res['entities']['wit$datetime:time'][0]['value'])
+        oggi = datetime.now()
+
+        if data.timestamp() < oggi.timestamp():
+            chat.send("Non puoi aggiungere un'azione nel passato, inserisci una data presente")
+            return
+
+        u.popState(True)
+        Attivita(u.popState()).setTimestamp(int(data.timestamp()))
+        chat.send("Ok, ho programmato l'attività per il "+data.strftime('%d/%m/%Y')+" alle ore "+data.strftime('%H:%M')+"\nOra dimmi per quanto tempo hai intenzione di fare attività")
+        u.pushState('add_durata')
+        # inserire e chiedere conferma
+    else:
+        chat.send("Non ho capito, per favore inserisci la data e l'ora dell'attività che vuoi svolgere")
+
 
 @bot.process_message
 def process_message(chat, message):
@@ -99,7 +129,8 @@ def process_message(chat, message):
         print('Ha uno stato: %s' %state)
         if state == 'set_eta':
             pstate_set_eta(chat, message, u)
-
+        elif state == 'add_dataora':
+            dataora(chat, message, u)
         #vedere che fare qua in base agli state
         return
 
@@ -140,7 +171,7 @@ def process_message(chat, message):
     # tres = html.escape(json.dumps(res, indent=True))
     # chat.send("<pre>"+tres+"</pre>")
     # bot.chat(LOG_CHANNEL).send('User: '+ message.sender.first_name + '\n'
-    #                     + 'Message: <pre>' + messaggio_utente + '</pre>\n'
+    #                     + 'Message: <pre>' + message.text + '</pre>\n'
     #                     + 'Res : <pre>'+tres+'</pre>')
 
 if __name__ == "__main__":
