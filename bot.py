@@ -16,15 +16,19 @@ bot.about = "Questo chatbot aiuta l'utente a monitorare l'andamento di una o pi�
             "nuoto, ciclismo e corsa, affinchè esse possano essere svolte rispettando la programmazione iniziale e " \
             "i parametri standard riguardanti l'allenamento previsto."
 
-def checkEta(user):
-    if User(user).getEta() is None:
-        bot.chat(user.id).send('Per poter funzionare devo sapere la tua età, puoi dirmi quanti anni hai?')
-        User(user).setState('set_eta')
-
 @bot.command("start")
 def start_command(chat, message, args):
     # resetto lo stato
-    User(message.sender).setState(None)
+    u = User(message.sender)
+    u.setState(None)
+
+
+    # if u.getEta() is None:
+    #    kb = botogram.Buttons()
+    #    kb[0].callback("Imposta la tua età", "set_eta")
+    #    chat.send('Ciao, prima di potermi usare devi dirmi quanti anni hai, se vuoi procedere digita clicca qui', attach=kb)
+    #    return
+
     btns = botogram.Buttons()
     btns[0].callback("Nuoto \U0001F3CA", "nuoto")
     btns[1].callback("Corsa \U0001F3C3", "corsa")
@@ -40,16 +44,28 @@ def start_command(chat, message, args):
               attach=btns)
 
 
+# @bot.command("set_eta")
+# def eta_command(chat, message):
+#     u = User(message.sender)
+#     chat.send('Ora inviami la tua età')
+#     u.pushState('set_eta')
+#
+# @bot.callback("set_eta")
+# def eta_command(chat, query):
+#     chat.delete_message(query.message)
+#     u = User(query.sender)
+#     chat.send('Ora inviami la tua età')
+#     u.pushState('set_eta')
+
 @bot.callback("nuoto")
 def nuoto_callback(query, chat):
-    User(query.sender).setState('add_nuoto')
+    User(query.sender).pushState('add_nuoto')
     chat.send("L'intent è il nuoto")
-    checkEta(query.sender)
 
 
 @bot.callback("corsa")
 def corsa_callback(query, chat):
-    User(query.sender).setState('add_corsa')
+    User(query.sender).pushState('add_corsa')
     chat.send("L'intent è la corsa")
 
 
@@ -65,22 +81,25 @@ def sbagliato_callback(query, chat):
     chat.send("Perdonami \U0001F605 \nProva a dirmi di nuovo quale attività vuoi svolgere, magari in maniera più "
               "precisa, in modo tale che io possa comprendere al meglio \U0001F609")
 
+def pstate_set_eta(chat, message, user):
+    numeri = [int(s) for s in message.text.split() if s.isdigit()]
+    if len(numeri) == 1:
+        chat.send('Ok, hai %s anni, se vuoi modificarla puoi usare il comando /set_eta' % numeri[0])
+        user.setEta(numeri[0])
+        user.popState(True)
+    else:
+        chat.send('Non credo di aver capito bene, puoi ripetere')
 
 @bot.process_message
 def process_message(chat, message):
     u = User(message.sender)
 
-    state = u.getState()
+    state = u.popState()
     if state is not None:
         print('Ha uno stato: %s' %state)
         if state == 'set_eta':
-            numeri = [int(s) for s in message.text.split() if s.isdigit()]
-            if len(numeri) == 1:
-                chat.send('Ok, hai %s anni' %numeri[0])
-                u.setEta(numeri[0])
-                u.setState()
-            else:
-                chat.send('Non credo di aver capito bene, puoi ripetere')
+            pstate_set_eta(chat, message, u)
+
         #vedere che fare qua in base agli state
         return
 

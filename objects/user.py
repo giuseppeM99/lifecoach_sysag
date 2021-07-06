@@ -6,14 +6,35 @@ c.execute('''CREATE TABLE IF NOT EXISTS user(user_id INTEGER PRIMARY KEY, state 
 conn.commit()
 
 class User:
+    STATE_SEP = ','
     def __init__(self, user):
-
-        print('User object %s created' % user.id)
         self.id = user.id
         c.execute('''INSERT OR IGNORE INTO user(user_id) VALUES(?)''', (self.id,))
+        conn.commit()
+
+    def pushState(self, nextState):
+        curState = self.getState()
+        if curState is None:
+            curState = nextState
+        else:
+            curState = self.STATE_SEP.join([nextState, *curState.split(',')])
+        self.setState(curState)
+
+
+    def popState(self, remove = False):
+        curState = self.getState()
+        if curState is None:
+            return False
+        splitted = curState.split(',')
+        prevState = splitted.pop(0)
+        if remove:
+            newState = None
+            if len(splitted) > 0:
+                newState = self.STATE_SEP.join(splitted)
+            self.setState(newState)
+        return prevState
 
     def getState(self):
-
         c.execute('''SELECT state FROM user WHERE user_id = ?''', (self.id,))
         u = c.fetchone()
         if u is not None:
@@ -21,6 +42,8 @@ class User:
         return None
 
     def setState(self, newState):
+        if newState is False:
+            newState = None
         c.execute('''UPDATE user SET state = :state WHERE user_id = :user_id''', {'user_id': self.id, 'state': newState})
         conn.commit()
         return True
