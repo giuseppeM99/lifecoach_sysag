@@ -25,7 +25,7 @@ class User:
     def popState(self, remove = False):
         curState = self.getState()
         if curState is None:
-            return False
+            return None
         splitted = str(curState).split(',')
         prevState = splitted.pop(0)
         if remove:

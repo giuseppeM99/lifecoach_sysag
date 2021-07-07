@@ -4,7 +4,7 @@ load_dotenv()
 
 import botogram
 from os import getenv
-from utils import wit
+from utils import wit, durataH
 from objects.user import User
 from objects.attivita import Attivita
 from dateutil import parser
@@ -64,24 +64,36 @@ def start_command(chat, message, args):
 def nuoto_callback(query, chat):
     u = User(query.sender)
     a = Attivita(query.sender.id, Attivita.NUOTO)
+    chat.delete_message(query.message)
 
     u.pushState(a.getID())
     u.pushState('add_dataora')
 
-    chat.send("L'intent è il nuoto")
     chat.send("Bene, quando hai intenzione di andare a nuotare? Dimmi pure la data e l'ora")
 
 
 @bot.callback("corsa")
 def corsa_callback(query, chat):
-    User(query.sender).pushState('add_corsa')
-    chat.send("L'intent è la corsa")
+    u = User(query.sender)
+    a = Attivita(query.sender.id, Attivita.NUOTO)
+    chat.delete_message(query.message)
+
+    u.pushState(a.getID())
+    u.pushState('add_dataora')
+
+    chat.send("Bene, quando hai intenzione di andare a correre? Dimmi pure la data e l'ora")
 
 
 @bot.callback("ciclismo")
 def ciclismo_callback(query, chat):
-    User(query.sender).setState('add_ciclismo')
-    chat.send("L'intent è il ciclismo")
+    u = User(query.sender)
+    a = Attivita(query.sender.id, Attivita.NUOTO)
+    chat.delete_message(query.message)
+
+    u.pushState(a.getID())
+    u.pushState('add_dataora')
+
+    chat.send("Bene, quando hai intenzione di andare in bici? Dimmi pure la data e l'ora")
 
 
 @bot.callback("sbagliato")
@@ -120,18 +132,107 @@ def dataora(chat, message, u):
         chat.send("Non ho capito, per favore inserisci la data e l'ora dell'attività che vuoi svolgere")
 
 
+def durata(chat, message, u):
+    res = wit(message.text)
+    if res['entities']['wit$duration:duration'] is not None and res['entities']['wit$duration:duration'][0] is not None:
+        durata = res['entities']['wit$duration:duration'][0]['normalized']['value']
+
+        u.popState(True)
+        Attivita(u.popState()).setDurata(durata)
+        chat.send("Ok, ho impostato la durata dell'attività "+durataH(durata))
+        chat.send("Ora dimmi quante calorie pianifichi di perdere durante questa attività")
+        u.pushState('add_calorie')
+    else:
+        chat.send("Non ho capito, per favore inserisci la durata dell'attività (esempio 30 minuti)")
+
+def calorie(chat, message, u):
+    if "no" in message.text.lower():
+        chat.send("Ok, non conteremo le calorie")
+        u.setState(None)
+
+    numeri = [int(s) for s in message.text.split() if s.isdigit()]
+    if len(numeri) == 1:
+        calorie = numeri[0]
+        u.popState(True)
+        chat.send('Ok, hai intenzione di perdere %s calorie' % calorie)
+        Attivita(u.popState()).setCalorie(calorie)
+        u.setState(None)
+    else:
+        chat.send("Non ho capito, per favore inserisci un numero (per esempio 100 calorie), se non vuoi inserire le calorie scrivi <b>No</b>")
+        return
+    chat.send("Bene, ti avviserò quando dovrai fare attività")
+
+def durataEffettiva(chat, message, u):
+    res = wit(message.text)
+    if res['entities']['wit$duration:duration'] is not None and res['entities']['wit$duration:duration'][0] is not None:
+        durata = res['entities']['wit$duration:duration'][0]['normalized']['value']
+
+        u.popState(True)
+        Attivita(u.popState()).setDurata(durata)
+        chat.send("Ok, ho impostato la durata dell'attività "+durataH(durata))
+        chat.send("Ora dimmi quante calorie pianifichi di perdere durante questa attività")
+        u.pushState('add_calorie')
+    else:
+        chat.send("Non ho capito, per favore inserisci la durata dell'attività (esempio 30 minuti)")
+
+def calorieEffettive(chat, message, u):
+    if "no" in message.text.lower():
+        chat.send("Ok, non conteremo le calorie")
+        u.setState(None)
+
+    numeri = [int(s) for s in message.text.split() if s.isdigit()]
+    if len(numeri) == 1:
+        calorie = numeri[0]
+        u.popState(True)
+        chat.send('Ok, hai intenzione di perdere %s calorie' % calorie)
+        Attivita(u.popState()).setCalorie(calorie)
+        u.setState(None)
+    else:
+        chat.send("Non ho capito, per favore inserisci un numero (per esempio 100 calorie), se non vuoi inserire le calorie scrivi <b>No</b>")
+        return
+    chat.send("Bene, ti avviserò quando dovrai fare attività")
+
+def pulsazioni(chat, message, u):
+    if "no" in message.text.lower():
+        chat.send("Ok, non conteremo le calorie")
+        u.setState(None)
+
+    numeri = [int(s) for s in message.text.split() if s.isdigit()]
+    if len(numeri) == 1:
+        calorie = numeri[0]
+        u.popState(True)
+        chat.send('Ok, hai intenzione di perdere %s calorie' % calorie)
+        Attivita(u.popState()).setCalorie(calorie)
+        u.setState(None)
+    else:
+        chat.send(
+            "Non ho capito, per favore inserisci un numero (per esempio 100 calorie), se non vuoi inserire le calorie scrivi <b>No</b>")
+        return
+    chat.send("Bene, ti avviserò quando dovrai fare attività")
+
 @bot.process_message
 def process_message(chat, message):
     u = User(message.sender)
 
     state = u.popState()
     if state is not None:
-        print('Ha uno stato: %s' %state)
+        print('Ha uno stato: %s' % state)
         if state == 'set_eta':
             pstate_set_eta(chat, message, u)
         elif state == 'add_dataora':
             dataora(chat, message, u)
-        #vedere che fare qua in base agli state
+        elif state == 'add_durata':
+            durata(chat, message, u)
+        elif state == 'add_calorie':
+            calorie(chat, message, u)
+        elif state == 'add_durata_effettiva':
+            durataEffettiva(chat, message, u)
+        elif state == 'add_calorie_effettive':
+            calorieEffettive(chat, message, u)
+        elif state == 'add_pulsazioni':
+            pulsazioni(chat, message, u)
+        # vedere che fare qua in base agli state
+        u.setState(None)
         return
 
     btns_nuoto = botogram.Buttons()
