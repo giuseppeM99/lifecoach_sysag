@@ -19,6 +19,9 @@ bot.about = "Questo chatbot aiuta l'utente a monitorare l'andamento di una o pi�
             "i parametri standard riguardanti l'allenamento previsto."
 
 
+def riepilogo(chat, message, a):
+    print('riepilogo finale')
+
 @bot.command("start")
 def start_command(chat, message, args):
     # resetto lo stato
@@ -75,7 +78,7 @@ def nuoto_callback(query, chat):
 @bot.callback("corsa")
 def corsa_callback(query, chat):
     u = User(query.sender)
-    a = Attivita(query.sender.id, Attivita.NUOTO)
+    a = Attivita(query.sender.id, Attivita.CORSA)
     chat.delete_message(query.message)
 
     u.pushState(a.getID())
@@ -87,7 +90,7 @@ def corsa_callback(query, chat):
 @bot.callback("ciclismo")
 def ciclismo_callback(query, chat):
     u = User(query.sender)
-    a = Attivita(query.sender.id, Attivita.NUOTO)
+    a = Attivita(query.sender.id, Attivita.CICLISMO)
     chat.delete_message(query.message)
 
     u.pushState(a.getID())
@@ -168,47 +171,70 @@ def durataEffettiva(chat, message, u):
         durata = res['entities']['wit$duration:duration'][0]['normalized']['value']
 
         u.popState(True)
-        Attivita(u.popState()).setDurata(durata)
-        chat.send("Ok, ho impostato la durata dell'attività "+durataH(durata))
-        chat.send("Ora dimmi quante calorie pianifichi di perdere durante questa attività")
-        u.pushState('add_calorie')
+        Attivita(u.popState()).setDurataEffettiva(durata)
+        chat.send("Ok, ho impostato la durata effettiva dell'attività "+durataH(durata))
+        if Attivita(u.popState()).getCalorie() is not None:
+            chat.send("Ora dimmi quante calorie hai perso durante questa attività")
+            u.pushState('add_calorie_effettive')
+        else:
+            chat.send("Ora dimmi quante pulsazioni al minuto hai fatto in media")
+            u.pushState('add_pulsazioni')
     else:
-        chat.send("Non ho capito, per favore inserisci la durata dell'attività (esempio 30 minuti)")
+        chat.send("Non ho capito, per favore inserisci la durata effettiva dell'attività (esempio 30 minuti)")
 
 def calorieEffettive(chat, message, u):
-    if "no" in message.text.lower():
-        chat.send("Ok, non conteremo le calorie")
-        u.setState(None)
-
     numeri = [int(s) for s in message.text.split() if s.isdigit()]
     if len(numeri) == 1:
         calorie = numeri[0]
         u.popState(True)
-        chat.send('Ok, hai intenzione di perdere %s calorie' % calorie)
-        Attivita(u.popState()).setCalorie(calorie)
-        u.setState(None)
+        chat.send('Ok, hai perso %s calorie' % calorie)
+        Attivita(u.popState()).setCalorieEffettive(calorie)
+        chat.send("Ora dimmi quante pulsazioni al minuto hai fatto in media")
+        u.pushState('add_pulsazioni')
     else:
-        chat.send("Non ho capito, per favore inserisci un numero (per esempio 100 calorie), se non vuoi inserire le calorie scrivi <b>No</b>")
+        chat.send("Non ho capito, per favore inserisci un numero (per esempio 100 calorie)")
         return
-    chat.send("Bene, ti avviserò quando dovrai fare attività")
 
 def pulsazioni(chat, message, u):
-    if "no" in message.text.lower():
-        chat.send("Ok, non conteremo le calorie")
-        u.setState(None)
-
     numeri = [int(s) for s in message.text.split() if s.isdigit()]
     if len(numeri) == 1:
-        calorie = numeri[0]
+        bpm = numeri[0]
         u.popState(True)
-        chat.send('Ok, hai intenzione di perdere %s calorie' % calorie)
-        Attivita(u.popState()).setCalorie(calorie)
+        chat.send('Ok, hai un ritmo cardiaco di %s battiti al minuto' % bpm)
+        Attivita(u.popState()).setPulsazioni(bpm)
+        a = Attivita(u.popState())
         u.setState(None)
+        riepilogo(bot, chat, a)
     else:
-        chat.send(
-            "Non ho capito, per favore inserisci un numero (per esempio 100 calorie), se non vuoi inserire le calorie scrivi <b>No</b>")
+        chat.send("Non ho capito, per favore inserisci un numero (per esempio 100 battiti)")
         return
-    chat.send("Bene, ti avviserò quando dovrai fare attività")
+
+
+@bot.command("lista")
+def lista(chat, message, args):
+    lista = Attivita.listaTotale(message.sender.id)
+    text = ""
+    for att in lista:
+        if att.getTimestamp() is None:
+            att.delete()
+            continue
+        text = text + str(att.getID()) + ") " + att.getTipoStr() + " del " + datetime.utcfromtimestamp(att.getTimestamp()).strftime("%d/%m/%Y %H:%M") + "\n"
+    if len(text) != 0:
+        chat.send(text)
+    else:
+        chat.send("Nessuna attività da vedere")
+
+
+@bot.command("risultati")
+def risultati(chat, message, args):
+    if len(args) == 0:
+        return
+    a = Attivita(int(args[0]))
+    if a.getUserID() == message.sender.id:
+        u = User(message.sender)
+        u.pushState(a.getID())
+        u.pushState('add_durata_effettiva')
+        chat.send("Ok, dimmi ora per quanto tempo hai fatto attività")
 
 @bot.process_message
 def process_message(chat, message):
@@ -231,8 +257,8 @@ def process_message(chat, message):
             calorieEffettive(chat, message, u)
         elif state == 'add_pulsazioni':
             pulsazioni(chat, message, u)
-        # vedere che fare qua in base agli state
-        u.setState(None)
+        else:
+            u.setState(None)
         return
 
     btns_nuoto = botogram.Buttons()
@@ -254,7 +280,6 @@ def process_message(chat, message):
 
     res = wit(message.text)
 
-    print(res)
     if res is None or not res['intents']:
         chat.send("Non ho capito quale attività hai scelto \U0001F605 \n\nRicordati che puoi selezionare "
                   "solo queste attività:\n- Nuoto \U0001F3CA \n- Corsa \U0001F3C3 \n- Ciclismo \U0001F6B4 \n\n"
@@ -274,6 +299,11 @@ def process_message(chat, message):
     # bot.chat(LOG_CHANNEL).send('User: '+ message.sender.first_name + '\n'
     #                     + 'Message: <pre>' + message.text + '</pre>\n'
     #                     + 'Res : <pre>'+tres+'</pre>')
+
+
+#@bot.timer(60)
+#def timer(bot):
+#    print("mi eseguo ogni 60 secondi")
 
 if __name__ == "__main__":
     bot.run()

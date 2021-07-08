@@ -14,7 +14,6 @@ class User:
 
     def pushState(self, nextState):
         curState = self.getState()
-        print(curState)
         if curState is None:
             curState = nextState
         else:
