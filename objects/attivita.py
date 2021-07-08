@@ -112,7 +112,7 @@ class Attivita:
         return None
 
     def getDurataEffettiva(self):
-        c.execute('''SELECT durata_effetiva FROM attivita WHERE id = :id''', {'id': self.id})
+        c.execute('''SELECT durata_effettiva FROM attivita WHERE id = :id''', {'id': self.id})
         u = c.fetchone()
         if u is False:
             u = None

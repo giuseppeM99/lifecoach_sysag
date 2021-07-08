@@ -19,8 +19,39 @@ bot.about = "Questo chatbot aiuta l'utente a monitorare l'andamento di una o pi�
             "i parametri standard riguardanti l'allenamento previsto."
 
 
-def riepilogo(chat, message, a):
-    print('riepilogo finale')
+def riepilogo(chat, message, a, u):
+    chat.send('Ok! Adesso ti dico come è andata...\n')
+
+    # controllo durata
+    if a.getDurataEffettiva() > a.getDurata() + 300:
+        chat.send("Hai svolto l'attività per più tempo previsto. Cerca sempre di non esagerare perchè il tuo corpo potrebbe risentirne.")
+    elif a.getDurata() + 300 >= a.getDurataEffettiva() >= a.getDurata() - 300:
+        chat.send("Complimenti! Hai svolto l'attività rispettando la durata prevista.")
+    else:
+        chat.send("Purtroppo hai svolto l'attività per meno tempo previsto. La prossima volta, magari, cerca di rispettare la durata prestabilita.")
+
+    # controllo percorso
+    if a.getDistanzaEffettiva() > a.getDistanza():
+        chat.send("Per quanto riguarda il percorso, hai superato la distanza impostata da te all'inizio. Cerca sempre di adeguarti il più possibile alla programmazione iniziale.")
+    elif a.getDistanzaEffettiva() == a.getDistanza():
+        chat.send("Per quanto riguarda il percorso, hai rispettato la distanza impostata da te all'inizio. Ottimo!")
+    else:
+        chat.send("Per quanto riguarda il percorso, non hai raggiunto la distanza impostata da te all'inizio. La prossima volta, magari, prova a percorrere un tratto più lungo.")
+
+    # controllo pulsazioni (formula di Tanaka)
+    if a.getPulsazioni() >= 208 - 0.7 * u.getEta():
+        chat.send("Secondo la formula di Tanaka, hai superato il limite di pulsazioni massime per la tua età. Ti consiglio di andare da un medico il più presto possibile!")
+    else:
+        chat.send("Secondo la formula di Tanaka, rientri nel range di pulsazioni massime per la tua età. Tuttavia, ti consiglio comunque di consultare un medico o un esperto del settore per più sicurezza.")
+
+    # controllo calorie
+    if a.getCalorieEffettive() > a.getCalorie() + 20:
+        chat.send("Per quanto riguarda le calorie invece, avresti potuto diminuire l'intensità dell'attività dato che hai bruciato più calorie di quanto mi avevi detto all'inizio.")
+    elif a.getCalorie() + 20 >= a.getCalorieEffettive() >= a.getCalorie() - 20:
+        chat.send("Per quanto riguarda le calorie invece, hai bruciato circa le stesse calorie che mi avevi detto all'inizio. Bravo, continua così!")
+    else:
+        chat.send("Per quanto riguarda le calorie invece, avresti potuto aumentare l'intensità dell'attività dato che hai bruciato meno calorie di quanto mi avevi detto all'inizio.")
+
 
 @bot.command("start")
 def start_command(chat, message, args):
@@ -204,7 +235,7 @@ def pulsazioni(chat, message, u):
         Attivita(u.popState()).setPulsazioni(bpm)
         a = Attivita(u.popState())
         u.setState(None)
-        riepilogo(bot, chat, a)
+        riepilogo(bot, chat, a, u)
     else:
         chat.send("Non ho capito, per favore inserisci un numero (per esempio 100 battiti)")
         return
