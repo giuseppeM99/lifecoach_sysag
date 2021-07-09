@@ -1,10 +1,4 @@
 from dotenv import load_dotenv
-import botogram
-from os import getenv
-from objects.user import User
-from objects.attivita import Attivita
-from dateutil import parser
-from datetime import datetime
 
 load_dotenv()
 
@@ -37,19 +31,29 @@ def riepilogo(chat, a, u):
             "\U0001F493 Secondo la formula di Tanaka, rientri nel range di pulsazioni massime per la tua età. Tuttavia,"
             " ti consiglio comunque di consultare un medico o un esperto del settore per più sicurezza\n")
 
-    # controllo percorso
-    if a.getDistanzaEffettiva() > a.getDistanza():
-        chat.send("Per quanto riguarda il percorso, hai superato la distanza impostata da te all'inizio. Cerca sempre di adeguarti il più possibile alla programmazione iniziale.")
-    elif a.getDistanzaEffettiva() == a.getDistanza():
-        chat.send("Per quanto riguarda il percorso, hai rispettato la distanza impostata da te all'inizio. Ottimo!")
-    else:
-        chat.send("Per quanto riguarda il percorso, non hai raggiunto la distanza impostata da te all'inizio. La prossima volta, magari, prova a percorrere un tratto più lungo.")
+        # controllo durata
+        if a.getDurataEffettiva() > a.getDurata() + 300:
+            chat.send(
+                "\U0000231B	Hai svolto l'attività per più tempo previsto. Cerca sempre di non esagerare perchè il tuo "
+                "corpo potrebbe risentirne.")
+        elif a.getDurata() + 300 >= a.getDurataEffettiva() >= a.getDurata() - 300:
+            chat.send("\U0000231B Complimenti! Hai svolto l'attività rispettando la durata prevista.")
+        else:
+            chat.send("\U0000231B Purtroppo hai svolto l'attività per meno tempo previsto. La prossima volta, magari,"
+                      " cerca di rispettare la durata prestabilita.")
 
-    # controllo pulsazioni (formula di Tanaka)
-    if a.getPulsazioni() >= 208 - 0.7 * u.getEta():
-        chat.send("Secondo la formula di Tanaka, hai superato il limite di pulsazioni massime per la tua età. Ti consiglio di andare da un medico il più presto possibile!")
-    else:
-        chat.send("Secondo la formula di Tanaka, rientri nel range di pulsazioni massime per la tua età. Tuttavia, ti consiglio comunque di consultare un medico o un esperto del settore per più sicurezza.")
+        # controllo percorso
+        if a.getDistanzaEffettiva() > a.getDistanza():
+            chat.send(
+                "\U0001F6E4 Per quanto riguarda il percorso, hai superato la distanza impostata da te all'inizio. Cerca"
+                " sempre di adeguarti il più possibile alla programmazione iniziale.")
+        elif a.getDistanzaEffettiva() == a.getDistanza():
+            chat.send("\U0001F6E4 Per quanto riguarda il percorso, hai rispettato la distanza impostata da te "
+                      "all'inizio. Ottimo!")
+        else:
+            chat.send(
+                "\U0001F6E4 Per quanto riguarda il percorso, non hai raggiunto la distanza impostata da te all'inizio."
+                " La prossima volta, magari, prova a percorrere un tratto più lungo.")
 
         # controllo calorie
         if a.getCalorieEffettive() > a.getCalorie() + 20:
@@ -298,7 +302,7 @@ def pulsazioni(chat, message, u):
 
 
 @bot.command("lista")
-def lista(chat, message, args):
+def lista(chat, message):
     lista = Attivita.listaTotale(message.sender.id)
     text = ""
     for att in lista:
@@ -414,7 +418,8 @@ def timer(bot):
         chat = bot.chat(a.getUserID())
         kb = botogram.Buttons()
         kb[0].callback("Effettua il riepilogo", "riepilogo", str(a.getID()))
-        chat.send("Ciao, ricorda di fare il riepilogo dell'attivita seguente " + a.getTipoStr() + " per " +durataH(a.getDurata()), attach=kb)
+        chat.send("Ciao, ricorda di fare il riepilogo dell'attivita seguente: " + a.getTipoStr() + " per " + durataH(
+            a.getDurata()), attach=kb)
         a.setStato(3)
 
 if __name__ == "__main__":
