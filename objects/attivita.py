@@ -1,10 +1,13 @@
 import sqlite3
 from time import time
+
 conn = sqlite3.connect('attivita.db')
 
 c = conn.cursor()
-c.execute('''CREATE TABLE IF NOT EXISTS attivita(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, tipo INTEGER, timestamp INTEGER, durata INTEGER, distanza INTEGER, calorie INTEGER, stato INTEGER, pulsazioni INTEGER, durata_effettiva INTEGER, distanza_effettiva INTEGER, calorie_effettive INTEGER)''')
+c.execute(
+    '''CREATE TABLE IF NOT EXISTS attivita(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, tipo INTEGER, timestamp INTEGER, durata INTEGER, distanza INTEGER, calorie INTEGER, stato INTEGER, pulsazioni INTEGER, durata_effettiva INTEGER, distanza_effettiva INTEGER, calorie_effettive INTEGER)''')
 conn.commit()
+
 
 class Attivita:
     NUOTO = 1
@@ -22,25 +25,24 @@ class Attivita:
 
     @staticmethod
     def daNotificare():
-        c.execute('''SELECT id FROM attivita WHERE stato = 1 AND timestamp < :timestamp''', {'timestamp': time()+300})
+        c.execute('''SELECT id FROM attivita WHERE stato = 1 AND timestamp < :timestamp''', {'timestamp': time() + 300})
         list = []
         for row in c.fetchall():
             if row is not None:
                 list.append(Attivita(row[0]))
         return list
-
 
     @staticmethod
     def daFareRiepilogo():
-        c.execute('''SELECT id FROM attivita WHERE stato = 2 AND (timestamp+durata) < :timestamp''', {'timestamp': time()+300})
+        c.execute('''SELECT id FROM attivita WHERE stato = 2 AND (timestamp+durata) < :timestamp''',
+                  {'timestamp': time() - 300})
         list = []
         for row in c.fetchall():
             if row is not None:
                 list.append(Attivita(row[0]))
         return list
 
-
-    def __init__(self, id, tipo = None):
+    def __init__(self, id, tipo=None):
         if tipo is None:
             self.id = id
         else:
@@ -160,7 +162,8 @@ class Attivita:
         return None
 
     def setTimestamp(self, timestamp):
-        c.execute('''UPDATE attivita SET timestamp = :timestamp WHERE id = :id''', {'id': self.id, 'timestamp': timestamp})
+        c.execute('''UPDATE attivita SET timestamp = :timestamp WHERE id = :id''',
+                  {'id': self.id, 'timestamp': timestamp})
         conn.commit()
 
     def setDurata(self, durata):
@@ -180,19 +183,23 @@ class Attivita:
         conn.commit()
 
     def setPulsazioni(self, pulsazioni):
-        c.execute('''UPDATE attivita SET pulsazioni = :pulsazioni WHERE id = :id''', {'id': self.id, 'pulsazioni': pulsazioni})
+        c.execute('''UPDATE attivita SET pulsazioni = :pulsazioni WHERE id = :id''',
+                  {'id': self.id, 'pulsazioni': pulsazioni})
         conn.commit()
 
     def setDurataEffettiva(self, durata_effettiva):
-        c.execute('''UPDATE attivita SET durata_effettiva = :durata_effettiva WHERE id = :id''', {'id': self.id, 'durata_effettiva': durata_effettiva})
+        c.execute('''UPDATE attivita SET durata_effettiva = :durata_effettiva WHERE id = :id''',
+                  {'id': self.id, 'durata_effettiva': durata_effettiva})
         conn.commit()
 
     def setDistanzaEffettiva(self, distanza_effettiva):
-        c.execute('''UPDATE attivita SET distanza_effettiva = :distanza_effettiva WHERE id = :id''', {'id': self.id, 'distanza_effettiva': distanza_effettiva})
+        c.execute('''UPDATE attivita SET distanza_effettiva = :distanza_effettiva WHERE id = :id''',
+                  {'id': self.id, 'distanza_effettiva': distanza_effettiva})
         conn.commit()
 
     def setCalorieEffettive(self, calorie_effettive):
-        c.execute('''UPDATE attivita SET calorie_effettive = :calorie_effettive WHERE id = :id''', {'id': self.id, 'calorie_effettive': calorie_effettive})
+        c.execute('''UPDATE attivita SET calorie_effettive = :calorie_effettive WHERE id = :id''',
+                  {'id': self.id, 'calorie_effettive': calorie_effettive})
         conn.commit()
 
     def delete(self):

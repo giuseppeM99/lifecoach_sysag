@@ -10,7 +10,7 @@ load_dotenv()
 
 import botogram
 from os import getenv
-from utils import wit, durataH
+from utils import wit, durataH, wit_distance_in_meters
 from objects.user import User
 from objects.attivita import Attivita
 from dateutil import parser
@@ -30,12 +30,12 @@ def riepilogo(chat, a, u):
     # controllo pulsazioni (formula di Tanaka)
     if a.getPulsazioni() >= 208 - 0.7 * u.getEta():
         chat.send(
-            "Hai superato il limite di pulsazioni massime per la tua età. Ti consiglio di andare da un medico il più "
-            "presto possibile!\n")
+            "\U0000203C Hai superato il limite di pulsazioni massime per la tua età. Ti consiglio di andare da un "
+            "medico il più presto possibile!\n")
     else:
         chat.send(
-            "Secondo la formula di Tanaka, rientri nel range di pulsazioni massime per la tua età. Tuttavia, ti "
-            "consiglio comunque di consultare un medico o un esperto del settore per più sicurezza\n")
+            "\U0001F493 Secondo la formula di Tanaka, rientri nel range di pulsazioni massime per la tua età. Tuttavia,"
+            " ti consiglio comunque di consultare un medico o un esperto del settore per più sicurezza\n")
 
     # controllo percorso
     if a.getDistanzaEffettiva() > a.getDistanza():
@@ -53,15 +53,26 @@ def riepilogo(chat, a, u):
 
         # controllo calorie
         if a.getCalorieEffettive() > a.getCalorie() + 20:
-            chat.send("Per quanto riguarda le calorie invece, avresti potuto diminuire l'intensità dell'attività dato "
-                      "che hai bruciato più calorie di quanto mi avevi detto all'inizio.\n")
+            chat.send("\U0001F975 Per quanto riguarda le calorie invece, avresti potuto diminuire l'intensità "
+                      "dell'attività dato che hai bruciato più calorie di quanto mi avevi detto all'inizio.\n")
         elif a.getCalorie() + 20 >= a.getCalorieEffettive() >= a.getCalorie() - 20:
-            chat.send("Per quanto riguarda le calorie invece, hai bruciato circa le stesse calorie che mi avevi detto "
-                      "all'inizio. Bravo, continua così!\n")
+            chat.send("\U0001F975 Per quanto riguarda le calorie invece, hai bruciato circa le stesse calorie che mi "
+                      "avevi detto all'inizio. Bravo, continua così!\n")
         else:
-            chat.send("Per quanto riguarda le calorie invece, avresti potuto aumentare l'intensità dell'attività dato "
-                      "che hai bruciato meno calorie di quanto mi avevi detto all'inizio.\n")
+            chat.send("\U0001F975 Per quanto riguarda le calorie invece, avresti potuto aumentare l'intensità "
+                      "dell'attività dato che hai bruciato meno calorie di quanto mi avevi detto all'inizio.\n")
 
+
+@bot.command("help")
+def help_command(chat, message):
+    u = message.sender
+    chat.send("Questo chatbot aiuta l'utente a monitorare l'andamento di una o più attività sportive a scelta tra "
+              "nuoto, ciclismo e corsa, affinchè esse possano essere svolte rispettando la programmazione iniziale e i "
+              "parametri standard riguardanti l'allenamento previsto.\n\n<b>Questo bot supporta i seguenti comandi:</b>"
+              "\n/help - Mostra questo messaggio di aiuto.\n/lista - Ottieni la lista di tutte le attività svolte e "
+              "da svolgere.\n/risultati num - Effettua il riepilogo dell'attività num.\n/seteta - Imposta la nuova età."
+              "\n/start - Inizializza il chatbot da capo.\n\nSe hai bisogno di aiuto, contatta uno degli sviluppatori:"
+              "\n- @AlexPlus117\n- @giuseppeM99\n- @antony_9\n- @jolly000\n- @Xander9000")
 
 @bot.command("start")
 def start_command(chat, message):
@@ -73,29 +84,22 @@ def start_command(chat, message):
         kb = botogram.Buttons()
         kb[0].callback("Imposta la tua età", "set_eta")
         chat.send(f"Ciao {utente} \U0001F604, benvenuto/a nel LifeCoach Chatbot di @AlexPlus117, @antony_9, "
-                  f"@giuseppeM99 @jolly000 e @Xander9000.\n\nD'ora in poi ti aiuterò a gestire le attività sportive che vorrai "
-                  f"svolgere.\nPuoi decidere tra queste 3 attività:\n- Nuoto \U0001F3CA \n- Corsa \U0001F3C3 \n"
-                  f"- Ciclismo \U0001F6B4 \n\nTerrò conto delle risposte che darai alle mie domande e dei parametri che mi"
-                  f" fornirai alla fine dell'allenamento per aiutarti a monitorare e gestire l'andamento "
-                  f"dell'esercizio \U0001F4C8 \n\n.Iniziamo! Dimmi pure la tua età.", attach=kb)
+                  f"@giuseppeM99 @jolly000 e @Xander9000.\n\nD'ora in poi ti aiuterò a gestire le attività sportive che"
+                  f" vorrai svolgere.\nPuoi decidere tra queste 3 attività:\n- Nuoto \U0001F3CA \n- Corsa \U0001F3C3 \n"
+                  f"- Ciclismo \U0001F6B4 \n\nTerrò conto delle risposte che darai alle mie domande e dei parametri che"
+                  f" mi fornirai alla fine dell'allenamento per aiutarti a monitorare e gestire l'andamento "
+                  f"dell'esercizio. \U0001F4C8 \n\nIniziamo! Dimmi pure la tua età \U0001F382", attach=kb)
         return
 
     btns = botogram.Buttons()
     btns[0].callback("Nuoto \U0001F3CA", "nuoto")
     btns[1].callback("Corsa \U0001F3C3", "corsa")
     btns[2].callback("Ciclismo \U0001F6B4", "ciclismo")
-    utente = message.sender.first_name
-    chat.send(f"Ciao {utente} \U0001F604, benvenuto/a nel LifeCoach Chatbot di @AlexPlus117, @antony_9, @giuseppeM99, "
-              f"@jolly000 e @Xander9000.\n\nD'ora in poi ti aiuterò a gestire le attività sportive che vorrai svolgere."
-              f"\nPuoi decidere tra queste 3 attività:\n- Nuoto \U0001F3CA \n- Corsa \U0001F3C3 \n"
-              f"- Ciclismo \U0001F6B4 \n\nTerrò conto delle risposte che darai alle mie domande e dei parametri che mi"
-              f" fornirai alla fine dell'allenamento per aiutarti a monitorare e gestire l'andamento "
-              f"dell'esercizio \U0001F4C8 \n\nOra puoi scrivermi la prima attività che hai intenzione di svolgere "
-              f"oppure, visto che è la prima volta, puoi selezionarla tramite i pulsanti qui sotto \U0001F609",
-              attach=btns)
+    chat.send("Ora puoi scrivermi l'attività che hai intenzione di svolgere oppure puoi selezionarla tramite i "
+              "pulsanti qui sotto \U0001F609", attach=btns)
 
 
-@bot.command("set_eta")
+@bot.command("seteta")
 def eta_command(chat, message):
     u = User(message.sender)
     chat.send('Ora inviami la tua età')
@@ -119,7 +123,7 @@ def nuoto_callback(query, chat):
     u.pushState(a.getID())
     u.pushState('add_dataora')
 
-    chat.send("Bene, quando hai intenzione di andare a nuotare? Dimmi pure la data e l'ora")
+    chat.send("Bene, quando hai intenzione di andare a nuotare?\nDimmi pure la data e l'ora.")
 
 
 @bot.callback("corsa")
@@ -131,7 +135,7 @@ def corsa_callback(query, chat):
     u.pushState(a.getID())
     u.pushState('add_dataora')
 
-    chat.send("Bene, quando hai intenzione di andare a correre? Dimmi pure la data e l'ora")
+    chat.send("Bene, quando hai intenzione di andare a correre?\nDimmi pure la data e l'ora.")
 
 
 @bot.callback("ciclismo")
@@ -143,7 +147,7 @@ def ciclismo_callback(query, chat):
     u.pushState(a.getID())
     u.pushState('add_dataora')
 
-    chat.send("Bene, quando hai intenzione di andare in bici? Dimmi pure la data e l'ora")
+    chat.send("Bene, quando hai intenzione di andare in bici?\nDimmi pure la data e l'ora.")
 
 
 @bot.callback("sbagliato")
@@ -156,12 +160,12 @@ def sbagliato_callback(query, chat):
 def pstate_set_eta(chat, message, user):
     numeri = [int(s) for s in message.text.split() if s.isdigit()]
     if len(numeri) == 1:
-        chat.send('Ok, hai %s anni, se vuoi modificarla puoi usare il comando /set_eta' % numeri[0])
+        chat.send('Ok, hai %s anni, se vuoi modificarla puoi usare il comando /seteta' % numeri[0])
         user.setEta(numeri[0])
         user.popState(True)
         start_command(chat, message)
     else:
-        chat.send('Non credo di aver capito bene, puoi ripetere')
+        chat.send('\U00002753 Non credo di aver capito bene, puoi ripetere?')
 
 
 def dataora(chat, message, u):
@@ -171,17 +175,17 @@ def dataora(chat, message, u):
         oggi = datetime.now()
 
         if data.timestamp() < oggi.timestamp():
-            chat.send("Non puoi aggiungere un'azione nel passato, inserisci una data presente")
+            chat.send("Non puoi aggiungere un'azione nel passato, inserisci una data presente.")
             return
 
         u.popState(True)
         Attivita(u.popState()).setTimestamp(int(data.timestamp()))
-        chat.send("Ok, ho programmato l'attività per il " + data.strftime('%d/%m/%Y') + " alle ore " + data.strftime(
-            '%H:%M') + "\nOra dimmi per quanto tempo hai intenzione di fare attività")
+        chat.send("\U0001F4C6 Ok, ho programmato l'attività per il " + data.strftime('%d/%m/%Y') + " alle ore " +
+                  data.strftime('%H:%M') + ".\n\nOra dimmi per quanto tempo hai intenzione di fare attività.")
         u.pushState('add_durata')
         # inserire e chiedere conferma
     else:
-        chat.send("Non ho capito, per favore inserisci la data e l'ora dell'attività che vuoi svolgere")
+        chat.send("\U00002753 Non ho capito, per favore inserisci la data e l'ora dell'attività che vuoi svolgere.")
 
 
 def durata(chat, message, u):
@@ -191,11 +195,10 @@ def durata(chat, message, u):
 
         u.popState(True)
         Attivita(u.popState()).setDurata(durata)
-        chat.send("Ok, ho impostato la durata dell'attività " + durataH(durata))
-        chat.send("Ora dimmi quanti metri vuoi percorrere")
+        chat.send("Ora dimmi quanti metri vuoi percorrere.")
         u.pushState('add_distanza')
     else:
-        chat.send("Non ho capito, per favore inserisci la durata dell'attività (esempio 30 minuti)")
+        chat.send("\U00002753 Non ho capito, per favore inserisci la durata dell'attività (esempio 30 minuti)")
 
 
 def distanza(chat, message, u):
@@ -205,16 +208,15 @@ def distanza(chat, message, u):
         distanza = wit_distance_in_meters(res['entities']['wit$distance:distance'])
         u.popState(True)
         Attivita(u.popState()).setDistanza(distanza)
-        chat.send("Ok, ho impostato la distanza dell'attività a " + str(distanza) + " metri")
-        chat.send("Ora dimmi quante calorie pianifichi di perdere durante questa attività")
+        chat.send("Ora dimmi quante calorie pianifichi di perdere durante questa attività.")
         u.pushState('add_calorie')
     else:
-        chat.send("Non ho capito, per favore inserisci la distanza dell'attività (esempio 30 metri)")
+        chat.send("\U00002753 Non ho capito, per favore inserisci la distanza dell'attività (esempio 30 metri)")
 
 
 def calorie(chat, message, u):
     if "no" in message.text.lower():
-        chat.send("Ok, non conteremo le calorie")
+        chat.send("Ok, non conteremo le calorie.")
         u.popState(True)
         Attivita(u.popState()).setStato(1)
         u.setState(None)
@@ -223,16 +225,16 @@ def calorie(chat, message, u):
     if len(numeri) == 1:
         calorie = numeri[0]
         u.popState(True)
-        chat.send('Ok, hai intenzione di perdere %s calorie' % calorie)
+        # chat.send('Ok, hai intenzione di perdere %s calorie' % calorie)
         Attivita(u.popState()).setCalorie(calorie)
         Attivita(u.popState()).setStato(1)
         u.setState(None)
     else:
         chat.send(
-            "Non ho capito, per favore inserisci un numero (per esempio 100 calorie), se non vuoi inserire le calorie "
-            "scrivi <b>No</b>")
+            "\U00002753 Non ho capito, per favore inserisci un numero (per esempio 100 calorie), se non vuoi inserire "
+            "le calorie scrivi <b>No</b>")
         return
-    chat.send("Bene, ti avviserò quando dovrai fare attività")
+    chat.send("\U000023F0 Bene, ti avviserò 5 minuti prima di quando dovrai svolgere l'attività che hai scelto.")
 
 
 def durataEffettiva(chat, message, u):
@@ -242,11 +244,11 @@ def durataEffettiva(chat, message, u):
 
         u.popState(True)
         Attivita(u.popState()).setDurataEffettiva(durata)
-        chat.send("Ok, ho impostato la durata effettiva dell'attività " + durataH(durata))
-        chat.send("Ora dimmi quanti metri hai percorso")
+        chat.send("Ora dimmi quanti metri hai percorso.")
         u.pushState('add_distanza_effettiva')
     else:
-        chat.send("Non ho capito, per favore inserisci la durata effettiva dell'attività (esempio 30 minuti)")
+        chat.send(
+            "\U00002753 Non ho capito, per favore inserisci la durata effettiva dell'attività (esempio 30 minuti)")
 
 
 def distanzaEffettiva(chat, message, u):
@@ -256,16 +258,16 @@ def distanzaEffettiva(chat, message, u):
 
         u.popState(True)
         Attivita(u.popState()).setDistanzaEffettiva(distanza)
-        chat.send("Ok, ho impostato la distanza effettiva dell'attività a " + str(distanza) + " metri")
 
         if Attivita(u.popState()).getCalorie() is not None:
-            chat.send("Ora dimmi quante calorie hai perso durante questa attività")
+            chat.send("Ora dimmi quante calorie hai perso durante questa attività.")
             u.pushState('add_calorie_effettive')
         else:
             chat.send("Ora dimmi quante pulsazioni al minuto hai fatto in media")
             u.pushState('add_pulsazioni')
     else:
-        chat.send("Non ho capito, per favore inserisci la distanza effettiva dell'attività (esempio 30 metri)")
+        chat.send(
+            "\U00002753 Non ho capito, per favore inserisci la distanza effettiva dell'attività (esempio 30 metri)")
 
 
 def calorieEffettive(chat, message, u):
@@ -273,12 +275,11 @@ def calorieEffettive(chat, message, u):
     if len(numeri) == 1:
         calorie = numeri[0]
         u.popState(True)
-        chat.send('Ok, hai perso %s calorie' % calorie)
         Attivita(u.popState()).setCalorieEffettive(calorie)
-        chat.send("Ora dimmi quante pulsazioni al minuto hai fatto in media")
+        chat.send("Ora dimmi quante pulsazioni al minuto hai fatto in media.")
         u.pushState('add_pulsazioni')
     else:
-        chat.send("Non ho capito, per favore inserisci un numero (per esempio 100 calorie)")
+        chat.send("\U00002753 Non ho capito, per favore inserisci un numero (per esempio 100 calorie)")
         return
 
 
@@ -287,13 +288,12 @@ def pulsazioni(chat, message, u):
     if len(numeri) == 1:
         bpm = numeri[0]
         u.popState(True)
-        chat.send('Ok, hai un ritmo cardiaco di %s battiti al minuto' % bpm)
         Attivita(u.popState()).setPulsazioni(bpm)
         a = Attivita(u.popState())
         u.setState(None)
         riepilogo(chat, a, u)
     else:
-        chat.send("Non ho capito, per favore inserisci un numero (per esempio 100 battiti)")
+        chat.send("\U00002753 Non ho capito, per favore inserisci un numero (per esempio 100 battiti)")
         return
 
 
@@ -305,12 +305,12 @@ def lista(chat, message, args):
         if att.getTimestamp() is None:
             att.delete()
             continue
-        text = text + str(att.getID()) + ") " + att.getTipoStr() + " del " + datetime.utcfromtimestamp(
+        text = text + str(att.getID()) + ") " + att.getTipoStr() + " del " + datetime.fromtimestamp(
             att.getTimestamp()).strftime("%d/%m/%Y %H:%M") + "\n"
     if len(text) != 0:
         chat.send(text)
     else:
-        chat.send("Nessuna attività da vedere")
+        chat.send("Nessuna attività da vedere.")
 
 
 @bot.command("risultati")
@@ -322,16 +322,17 @@ def risultati(chat, message, args):
         u = User(message.sender)
         u.pushState(a.getID())
         u.pushState('add_durata_effettiva')
-        chat.send("Ok, dimmi ora per quanto tempo hai fatto attività")
+        chat.send("Ok, ora dimmi per quanto tempo hai fatto attività.")
 
 @bot.callback("riepilogo")
 def risultaticb(query, chat, data):
     a = Attivita(int(data))
+    chat.delete_message(query.message)
     if a.getUserID() == query.sender.id:
         u = User(query.sender)
         u.pushState(a.getID())
         u.pushState('add_durata_effettiva')
-        chat.send("Ok, dimmi ora per quanto tempo hai fatto attività")
+        chat.send("Ok, ora dimmi per quanto tempo hai fatto attività.")
 
 @bot.process_message
 def process_message(chat, message):
@@ -405,8 +406,8 @@ def process_message(chat, message):
 def timer(bot):
     for a in Attivita.daNotificare():
         chat = bot.chat(a.getUserID())
-        chat.send("Ciao, ricorda che alle " + datetime.utcfromtimestamp(
-            a.getTimestamp()).strftime("%H:%M") + " devi fare " + a.getTipoStr() + " per " +durataH(a.getDurata()))
+        chat.send("Ciao, ricorda che alle " + datetime.fromtimestamp(
+            a.getTimestamp()).strftime("%H:%M") + " devi fare " + a.getTipoStr() + " per " + durataH(a.getDurata()))
         a.setStato(2)
 
     for a in Attivita.daFareRiepilogo():
