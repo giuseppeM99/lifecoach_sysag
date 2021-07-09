@@ -325,7 +325,6 @@ def elimina(chat, message, args):
     if len(args) == 0:
         return
     a = Attivita(int(args[0]))
-    print(a.getUserID())
     if a.getUserID() == message.sender.id:
         a.delete()
         chat.send("Ok, l'attività numero " + str(a.getID()) + " è stata eliminata!")
