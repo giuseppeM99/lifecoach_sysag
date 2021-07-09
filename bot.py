@@ -73,10 +73,11 @@ def help_command(chat, message):
     chat.send("Questo chatbot aiuta l'utente a monitorare l'andamento di una o più attività sportive a scelta tra "
               "nuoto, ciclismo e corsa, affinchè esse possano essere svolte rispettando la programmazione iniziale e i "
               "parametri standard riguardanti l'allenamento previsto.\n\n<b>Questo bot supporta i seguenti comandi:</b>"
-              "\n/help - Mostra questo messaggio di aiuto.\n/lista - Ottieni la lista di tutte le attività svolte e "
-              "da svolgere.\n/risultati num - Effettua il riepilogo dell'attività num.\n/seteta - Imposta la nuova età."
-              "\n/start - Inizializza il chatbot da capo.\n\nSe hai bisogno di aiuto, contatta uno degli sviluppatori:"
-              "\n- @AlexPlus117\n- @giuseppeM99\n- @antony_9\n- @jolly000\n- @Xander9000")
+              "\n/help - <i>Mostra questo messaggio di aiuto</i>\n/lista - <i>Ottieni la lista di tutte le attività "
+              "da svolgere</i>\n/seteta - <i>Imposta la nuova età</i>\n/elimina n - <i>Elimina l'attività numero n</i>"
+              "\n/start - <i>Inizializza il chatbot da capo</i>\n\nSe hai bisogno di aiuto, contatta uno degli "
+              "sviluppatori:\n- @AlexPlus117\n- @giuseppeM99\n- @antony_9\n- @jolly000\n- @Xander9000")
+
 
 @bot.command("start")
 def start_command(chat, message):
@@ -225,19 +226,20 @@ def calorie(chat, message, u):
         Attivita(u.popState()).setStato(1)
         u.setState(None)
 
-    numeri = [int(s) for s in message.text.split() if s.isdigit()]
-    if len(numeri) == 1:
-        calorie = numeri[0]
-        u.popState(True)
-        # chat.send('Ok, hai intenzione di perdere %s calorie' % calorie)
-        Attivita(u.popState()).setCalorie(calorie)
-        Attivita(u.popState()).setStato(1)
-        u.setState(None)
     else:
-        chat.send(
-            "\U00002753 Non ho capito, per favore inserisci un numero (per esempio 100 calorie), se non vuoi inserire "
-            "le calorie scrivi <b>No</b>")
-        return
+        numeri = [int(s) for s in message.text.split() if s.isdigit()]
+        if len(numeri) == 1:
+            calorie = numeri[0]
+            u.popState(True)
+            # chat.send('Ok, hai intenzione di perdere %s calorie' % calorie)
+            Attivita(u.popState()).setCalorie(calorie)
+            Attivita(u.popState()).setStato(1)
+            u.setState(None)
+        else:
+            chat.send(
+                "\U00002753 Non ho capito, per favore inserisci un numero (per esempio 100 calorie), se non vuoi "
+                "inserire le calorie scrivi <b>No</b>")
+            return
     chat.send("\U000023F0 Bene, ti avviserò 5 minuti prima di quando dovrai svolgere l'attività che hai scelto.")
 
 
@@ -309,24 +311,25 @@ def lista(chat, message):
         if att.getTimestamp() is None:
             att.delete()
             continue
-        text = text + str(att.getID()) + ") " + att.getTipoStr() + " del " + datetime.fromtimestamp(
-            att.getTimestamp()).strftime("%d/%m/%Y %H:%M") + "\n"
+        if att.getStato() != 3:
+            text = text + str(att.getID()) + ") " + att.getTipoStr() + " del " + datetime.fromtimestamp(
+                att.getTimestamp()).strftime("%d/%m/%Y %H:%M") + "\n"
     if len(text) != 0:
         chat.send(text)
     else:
         chat.send("Nessuna attività da vedere.")
 
 
-@bot.command("risultati")
-def risultati(chat, message, args):
+@bot.command("elimina")
+def elimina(chat, message, args):
     if len(args) == 0:
         return
     a = Attivita(int(args[0]))
+    print(a.getUserID())
     if a.getUserID() == message.sender.id:
-        u = User(message.sender)
-        u.pushState(a.getID())
-        u.pushState('add_durata_effettiva')
-        chat.send("Ok, ora dimmi per quanto tempo hai fatto attività.")
+        a.delete()
+        chat.send("Ok, l'attività numero " + str(a.getID()) + " è stata eliminata!")
+
 
 @bot.callback("riepilogo")
 def risultaticb(query, chat, data):
@@ -337,6 +340,7 @@ def risultaticb(query, chat, data):
         u.pushState(a.getID())
         u.pushState('add_durata_effettiva')
         chat.send("Ok, ora dimmi per quanto tempo hai fatto attività.")
+
 
 @bot.process_message
 def process_message(chat, message):
@@ -421,6 +425,7 @@ def timer(bot):
         chat.send("Ciao, ricorda di fare il riepilogo dell'attivita seguente: " + a.getTipoStr() + " per " + durataH(
             a.getDurata()), attach=kb)
         a.setStato(3)
+
 
 if __name__ == "__main__":
     bot.run()

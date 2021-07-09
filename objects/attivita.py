@@ -204,3 +204,4 @@ class Attivita:
 
     def delete(self):
         c.execute('''DELETE FROM attivita WHERE id = :id''', {'id': self.id})
+        conn.commit()
