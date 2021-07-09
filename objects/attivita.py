@@ -1,8 +1,9 @@
 import sqlite3
+from time import time
 conn = sqlite3.connect('attivita.db')
 
 c = conn.cursor()
-c.execute('''CREATE TABLE IF NOT EXISTS attivita(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, tipo INTEGER, timestamp INTEGER, durata INTEGER, distanza INTEGER, calorie INTEGER, notificato INTEGER, pulsazioni INTEGER, durata_effettiva INTEGER, distanza_effettiva INTEGER, calorie_effettive INTEGER)''')
+c.execute('''CREATE TABLE IF NOT EXISTS attivita(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, tipo INTEGER, timestamp INTEGER, durata INTEGER, distanza INTEGER, calorie INTEGER, stato INTEGER, pulsazioni INTEGER, durata_effettiva INTEGER, distanza_effettiva INTEGER, calorie_effettive INTEGER)''')
 conn.commit()
 
 class Attivita:
@@ -18,6 +19,26 @@ class Attivita:
             if row is not None:
                 list.append(Attivita(row[0]))
         return list
+
+    @staticmethod
+    def daNotificare():
+        c.execute('''SELECT id FROM attivita WHERE stato = 1 AND timestamp < :timestamp''', {'timestamp': time()+300})
+        list = []
+        for row in c.fetchall():
+            if row is not None:
+                list.append(Attivita(row[0]))
+        return list
+
+
+    @staticmethod
+    def daFareRiepilogo():
+        c.execute('''SELECT id FROM attivita WHERE stato = 2 AND (timestamp+durata) < :timestamp''', {'timestamp': time()+300})
+        list = []
+        for row in c.fetchall():
+            if row is not None:
+                list.append(Attivita(row[0]))
+        return list
+
 
     def __init__(self, id, tipo = None):
         if tipo is None:
@@ -93,8 +114,8 @@ class Attivita:
             return u[0]
         return None
 
-    def getNotificato(self):
-        c.execute('''SELECT notificato FROM attivita WHERE id = :id''', {'id': self.id})
+    def getStato(self):
+        c.execute('''SELECT stato FROM attivita WHERE id = :id''', {'id': self.id})
         u = c.fetchone()
         if u is False:
             u = None
@@ -154,8 +175,8 @@ class Attivita:
         c.execute('''UPDATE attivita SET calorie = :calorie WHERE id = :id''', {'id': self.id, 'calorie': calorie})
         conn.commit()
 
-    def setNotificato(self, notificato):
-        c.execute('''UPDATE attivita SET notificato = :notificato WHERE id = :id''', {'id': self.id, 'notificato': notificato})
+    def setStato(self, stato):
+        c.execute('''UPDATE attivita SET stato = :stato WHERE id = :id''', {'id': self.id, 'stato': stato})
         conn.commit()
 
     def setPulsazioni(self, pulsazioni):

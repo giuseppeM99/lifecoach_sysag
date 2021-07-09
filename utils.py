@@ -6,7 +6,6 @@ witInstance = Wit(getenv('WIT_TOKEN'))
 
 def traduci(message):
     try:
-        print(message)
         res = itrans(message, from_lang='it', to_lang='en')
         return res
     except json.decoder.JSONDecodeError:
@@ -37,3 +36,24 @@ def durataH(durata):
         text = str(durata % 24) + " ore "
 
     return text
+
+def wit_distance_in_meters(wit_distance):
+    distance = 0
+    for entity in wit_distance:
+        mul = 1
+        unit = entity['unit']
+        if unit == 'kilometre':
+            mul = 1000
+        elif unit == 'centimetre':
+            mul = 0.01
+        elif unit == 'millimetre':
+            mul = 0.0001
+        elif unit == 'miles':
+            mul = 1609.344
+        elif unit == 'yard':
+            mul = 0.9144
+        elif unit == 'foot':
+            mul = 0.3048
+        distance = distance + (entity['value'] * mul)
+
+    return distance
