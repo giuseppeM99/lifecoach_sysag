@@ -14,7 +14,7 @@ LOG_CHANNEL = getenv('LOG_CHANNEL')
 bot = botogram.create(getenv('TG_TOKEN'))
 
 bot.about = "Questo chatbot aiuta l'utente a monitorare l'andamento di una o più attività sportive a scelta tra " \
-            "nuoto, ciclismo e corsa, affinchè esse possano essere svolte rispettando la programmazione iniziale e " \
+            "nuoto, ciclismo e corsa, affinché esse possano essere svolte rispettando la programmazione iniziale e " \
             "i parametri standard riguardanti l'allenamento previsto."
 
 
@@ -34,7 +34,7 @@ def riepilogo(chat, a, u):
         # controllo durata
         if a.getDurataEffettiva() > a.getDurata() + 300:
             chat.send(
-                "\U0000231B	Hai svolto l'attività per più tempo previsto. Cerca sempre di non esagerare perchè il tuo "
+                "\U0000231B	Hai svolto l'attività per più tempo previsto. Cerca sempre di non esagerare perché il tuo "
                 "corpo potrebbe risentirne.")
         elif a.getDurata() + 300 >= a.getDurataEffettiva() >= a.getDurata() - 300:
             chat.send("\U0000231B Complimenti! Hai svolto l'attività rispettando la durata prevista.")
@@ -71,7 +71,7 @@ def riepilogo(chat, a, u):
 def help_command(chat, message):
     u = message.sender
     chat.send("Questo chatbot aiuta l'utente a monitorare l'andamento di una o più attività sportive a scelta tra "
-              "nuoto, ciclismo e corsa, affinchè esse possano essere svolte rispettando la programmazione iniziale e i "
+              "nuoto, ciclismo e corsa, affinché esse possano essere svolte rispettando la programmazione iniziale e i "
               "parametri standard riguardanti l'allenamento previsto.\n\n<b>Questo bot supporta i seguenti comandi:</b>"
               "\n/help - <i>Mostra questo messaggio di aiuto</i>\n/lista - <i>Ottieni la lista di tutte le attività "
               "da svolgere</i>\n/seteta - <i>Imposta la nuova età</i>\n/elimina n - <i>Elimina l'attività numero n</i>"
